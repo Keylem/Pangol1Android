@@ -1,0 +1,434 @@
+\documentclass[11pt, a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{lmodern}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    urlcolor=blue,
+    bookmarksnumbered=true,
+    pdftitle={Manuel d'Utilisation Pangol1},
+    pdfauthor={Pangol1 Team}
+}
+\usepackage{enumitem}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{float}
+\usepackage{tabularx}
+\usepackage{booktabs}
+
+\title{Manuel d'Utilisation : Pangol1}
+\author{}
+\date{}
+
+\addto\captionsfrench{\renewcommand{\contentsname}{Sommaire}}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.35em}
+\setlist{topsep=0.2em, itemsep=0.2em}
+
+\newcommand{\placeholderfigure}[3]{%
+\begin{figure}[htbp]
+    \centering
+    \fbox{\parbox[c][0.32\textheight][c]{0.9\textwidth}{\centering
+        \textit{#1}\\[0.4em]
+        \texttt{#2}}}
+    \caption{#1}
+    \label{fig:#3}
+\end{figure}
+}
+
+\begin{document}
+
+\maketitle
+
+\section*{À propos de ce document}
+\addcontentsline{toc}{section}{À propos de ce document}
+Ce manuel décrit l'interface graphique de \textbf{Pangol1}, les actions principales et les réglages disponibles. Il a été conçu pour accueillir des captures d'écran et des schémas supplémentaires dans les sections clés.
+
+\vspace{2ex}
+\noindent
+{\small \textit{Dernière mise à jour : \today}}
+
+\newpage
+
+\tableofcontents
+
+\newpage
+
+\section{Introduction}
+
+\subsection{Qu'est-ce que Pangol1 ?}
+\textbf{Pangol1} est une application graphique permettant d'explorer des données tabulaires et de générer des rapports visuels (graphiques, images et texte) exportables.
+
+\subsection{Formats pris en charge}
+\begin{itemize}
+    \item Fichiers \textbf{CSV}, \textbf{TSV} et \textbf{TXT}
+    \item Archives \textbf{ZIP} (extraction puis chargement)
+    \item Fichiers \textbf{Parquet}
+    \item Chargement depuis une \textbf{URL}
+\end{itemize}
+
+\subsection{Fonctionnalités principales}
+\begin{itemize}
+    \item Chargement multi-fichiers et gestion des tables récentes
+    \item Table interactive (pagination, tri, filtres, masquage et renommage)
+    \item Statistiques détaillées par colonne et indicateurs rapides en barre d'état
+    \item Création d'un rapport (Notebook) avec graphiques, images et texte
+    \item Export du rapport en HTML, PDF ou Markdown
+    \item Thèmes, langues et réglages d'interface personnalisables
+\end{itemize}
+
+\subsection{Conventions de lecture}
+\begin{itemize}
+    \item Les menus sont indiqués en gras, par exemple : \textbf{Fichier → Ouvrir}
+    \item Les raccourcis clavier sont indiqués en style \texttt{Ctrl+O}
+\end{itemize}
+
+\section{Démarrage rapide}
+
+\subsection{Lancer l'application}
+Pangol1 fonctionne sur Windows, Linux et macOS.
+\begin{enumerate}
+    \item Lancez \textbf{Pangol1.jar} ou exécutez \texttt{java -jar Pangol1.jar}
+    \item En développement, exécutez la classe principale \textbf{Pangol1}
+    \item L'interface principale s'affiche après l'écran de chargement
+\end{enumerate}
+
+\subsection{Première utilisation}
+\begin{enumerate}
+    \item Ouvrez un fichier via \textbf{Fichier → Ouvrir}
+    \item Les données s'affichent dans la table
+    \item Utilisez le panneau de gauche pour créer un graphique ou un rapport
+\end{enumerate}
+
+\section{Vue générale de l'interface}
+
+\placeholderfigure{Vue générale de l'interface}{images/ui-overview.png}{ui-overview}
+
+\subsection{Zones principales}
+\begin{itemize}
+    \item \textbf{Barre de menus} : accès aux fichiers, affichages et aides
+    \item \textbf{Panneau de rapport (gauche)} : création et édition du Notebook
+    \item \textbf{Table de données (droite)} : exploration et filtrage des données
+    \item \textbf{Barre d'état (bas)} : informations de statut et statistiques rapides
+\end{itemize}
+
+\subsection{Séparateurs (split)}
+Les panneaux sont séparés par des barres réglables. L'orientation principale et celle du Notebook peuvent être modifiées via \textbf{Affichage → Split}.
+
+\section{Barre de menus}
+
+\subsection{Menu Fichier}
+\begin{itemize}
+    \item \textbf{Ouvrir} : charger un ou plusieurs fichiers (CSV, TSV, TXT, ZIP, Parquet)
+    \item \textbf{Ouvrir récent} : accéder aux tables récemment ouvertes
+    \item \textbf{Ouvrir une URL} : charger un fichier distant et choisir un dossier de destination
+    \item \textbf{Paramètres} : ouvrir la fenêtre de réglages
+    \item \textbf{Quitter} : fermer l'application
+\end{itemize}
+
+\subsection{Menu Affichage}
+\begin{itemize}
+    \item \textbf{Panneaux} : afficher ou masquer la table, le Notebook et le panneau de réglages du Notebook
+    \item \textbf{Split} : orientation principale, orientation du Notebook, réinitialisation (principal, Notebook, complet)
+\end{itemize}
+
+\subsection{Menu Aide}
+\begin{itemize}
+    \item \textbf{Langues} : basculer l'interface (Français, Anglais, Espagnol, Arabe, Portugais, Russe, Japonais, Indonésien, Turc, Chinois simplifié)
+    \item \textbf{Documentation} : ouvrir la documentation (si configurée)
+    \item \textbf{À propos} : version, licence et équipe
+\end{itemize}
+
+\section{Chargement et gestion des données}
+
+\subsection{Ouvrir un fichier}
+\begin{enumerate}
+    \item \textbf{Fichier → Ouvrir}
+    \item Sélectionnez un ou plusieurs fichiers
+    \item Pour les \textbf{ZIP}, choisissez un dossier de destination pour l'extraction
+    \item Si plusieurs tables sont chargées, elles apparaissent dans la liste des tables
+\end{enumerate}
+
+\subsection{Ouvrir une URL}
+\begin{enumerate}
+    \item \textbf{Fichier → Ouvrir une URL}
+    \item Saisissez une URL valide
+    \item Choisissez un dossier où stocker le fichier téléchargé
+\end{enumerate}
+
+\subsection{Écran vide}
+Lorsque aucune table récente n'est disponible, un bouton \textbf{Charger} permet d'ouvrir un fichier.
+
+\subsection{Liste des tables récentes}
+Lorsque aucune table n'est ouverte, Pangol1 affiche une liste des tables chargées. Un double-clic ouvre une table. Un clic droit permet :
+\begin{itemize}
+    \item \textbf{Renommer} l'alias d'une table
+    \item \textbf{Ouvrir l'emplacement} du fichier
+    \item \textbf{Retirer des récents}
+    \item \textbf{Supprimer du disque}
+\end{itemize}
+
+\subsection{Fermer une table}
+Utilisez le bouton de fermeture dans la barre d'outils de la table. La vue bascule sur la liste ou l'écran vide.
+
+\section{Table de données}
+
+\placeholderfigure{Vue table de données}{images/table-view.png}{table-view}
+
+\subsection{Pagination}
+\begin{itemize}
+    \item Navigation via \textbf{First, Previous, Next, Last}
+    \item Taille de page configurable : 500, 1000, 5000, 10000 lignes
+    \item L'option de taille n'apparaît que pour les tables volumineuses
+\end{itemize}
+
+\subsection{Barre d'outils}
+\begin{itemize}
+    \item \textbf{Filtres avancés} : ouvre la fenêtre de filtrage multi-conditions
+    \item \textbf{Effacer les filtres}
+    \item \textbf{Afficher toutes les colonnes}
+    \item \textbf{Masquer les colonnes vides}
+    \item \textbf{Fermer la table}
+\end{itemize}
+
+\subsection{En-têtes et sélection}
+\begin{itemize}
+    \item Clic gauche sur un en-tête : sélection de la colonne
+    \item Clic droit sur un en-tête : menu contextuel complet
+    \item Un pictogramme indique qu'un filtre est actif sur une colonne
+\end{itemize}
+
+\subsection{Menu contextuel d'une colonne}
+\begin{itemize}
+    \item \textbf{Tri} : ascendant ou descendant
+    \item \textbf{Filtrage} : Top N et Bottom N (longueur, valeur ou date selon le type), plage de valeurs, vides, non vides
+    \item \textbf{Statistiques} : résumé, taux de valeurs nulles, cardinalité, IQR, asymétrie, variation, corrélation
+    \item \textbf{Renommer} et \textbf{Masquer} la colonne
+\end{itemize}
+
+\subsection{Statistiques rapides}
+Lorsque vous sélectionnez une colonne, la barre d'état affiche \textbf{min}, \textbf{max}, \textbf{moyenne} et \textbf{somme} si disponibles.
+
+\section{Filtrage avancé}
+
+\subsection{Créer un filtre}
+\begin{enumerate}
+    \item Ouvrez la fenêtre via \textbf{Filtres avancés}
+    \item Choisissez une colonne, un type de filtre et une logique (ET/OU)
+    \item Ajoutez plusieurs conditions si nécessaire
+\end{enumerate}
+
+\subsection{Types de filtres disponibles}
+\begin{itemize}
+    \item \textbf{Recherche} : par valeur (texte, nombre, date, booléen)
+    \item \textbf{Plage} : intervalle numérique ou temporel
+    \item \textbf{Top N} / \textbf{Bottom N}
+    \item \textbf{Afficher les vides} / \textbf{Masquer les vides}
+    \item \textbf{Tri} : ascendant ou descendant
+\end{itemize}
+
+\section{Notebook (rapport)}
+
+\placeholderfigure{Notebook et réglages de rapport}{images/report-notebook.png}{report-notebook}
+
+\subsection{Concept}
+Le Notebook regroupe des blocs de contenu (graphique, image, texte). Il apparaît dès qu'un bloc est ajouté et permet d'organiser une analyse puis d'exporter un rapport complet.
+
+\subsection{Ajouter un bloc}
+\begin{itemize}
+    \item \textbf{Ajouter un graphique}
+    \item \textbf{Ajouter une image}
+    \item \textbf{Ajouter du texte}
+\end{itemize}
+
+\subsection{Éditer et organiser}
+\begin{itemize}
+    \item Double-clic sur un bloc pour l'éditer
+    \item Menu contextuel : déplacer vers le haut/bas, modifier, supprimer
+    \item Glisser-déposer pour réordonner les éléments
+\end{itemize}
+
+\subsection{Barre d'outils du Notebook}
+\begin{itemize}
+    \item \textbf{Annuler / Rétablir}
+    \item \textbf{Exporter}
+\end{itemize}
+
+\subsection{Exporter un rapport}
+\begin{itemize}
+    \item Formats : \textbf{HTML}, \textbf{PDF}, \textbf{Markdown}
+    \item Thèmes : Linen, Ink, Sage, Ember, Harbor, Sandstone
+    \item Options : inclure un titre, ouvrir le fichier après export
+    \item Prévisualisation intégrée avant l'export
+\end{itemize}
+
+\section{Configuration des graphiques}
+
+\placeholderfigure{Paramétrage d'un graphique}{images/chart-settings.png}{chart-settings}
+
+\subsection{Types disponibles}
+\begin{itemize}
+    \item \textbf{Barres} : comparaison de catégories
+    \item \textbf{Colonnes} : tendances et comparaisons verticales
+    \item \textbf{Camembert} : proportions
+    \item \textbf{Courbe} : évolution continue
+    \item \textbf{Nuage de points} : dispersion
+    \item \textbf{Aire} : variation cumulée
+    \item \textbf{Radar} : comparaison multi-axes
+    \item \textbf{Heatmap} : intensité par grille
+\end{itemize}
+
+\subsection{Données}
+\begin{itemize}
+    \item \textbf{Table} : choix de la source (table courante ou autre)
+    \item \textbf{Inclure les filtres} : utilise les filtres actifs dans le graphique
+    \item \textbf{Pourcentage} : exprime les valeurs en pourcentage
+    \item \textbf{Colonne de groupe} (catégorielle) et \textbf{Colonne de valeur} (numérique ou date)
+    \item \textbf{Groupe principal} (optionnel) pour hiérarchiser les catégories
+\end{itemize}
+
+\subsection{Axes}
+\begin{itemize}
+    \item Nombre de graduations (ticks)
+    \item Échelle : linéaire, logarithmique ou racine carrée
+    \item Afficher / masquer l'axe X ou Y
+    \item Libellés des axes
+\end{itemize}
+
+\subsection{Légende}
+\begin{itemize}
+    \item Afficher ou masquer la légende
+    \item Orientation verticale ou horizontale
+\end{itemize}
+
+\subsection{Couleurs}
+\begin{itemize}
+    \item Sélection de couleurs par série
+    \item Prévisualisation via un nuancier
+\end{itemize}
+
+\subsection{Options complémentaires}
+\begin{itemize}
+    \item Titre du graphique
+    \item Option \textbf{Empilement} (selon type et disponibilité)
+\end{itemize}
+
+\section{Images et texte dans le rapport}
+
+\subsection{Image}
+\begin{itemize}
+    \item Formats acceptés : PNG, JPG, JPEG, GIF, BMP, WEBP, SVG
+    \item Sélectionnez une image via le sélecteur de fichiers
+\end{itemize}
+
+\subsection{Texte}
+\begin{itemize}
+    \item Saisie libre avec retour à la ligne automatique
+    \item Idéal pour commentaires, conclusions et annotations
+\end{itemize}
+
+\section{Paramètres de l'application}
+
+Les sections de réglages sont repliables pour faciliter la navigation.
+
+\placeholderfigure{Fenêtre des paramètres}{images/settings-dialog.png}{settings-dialog}
+
+\subsection{Général}
+\begin{itemize}
+    \item Langue de l'interface (10 langues disponibles)
+    \item Écran de bienvenue au démarrage
+    \item Vérification des mises à jour
+    \item Réouverture automatique des tables
+    \item Table par défaut (fichier ou URL)
+    \item Confirmation à la fermeture de l'application ou d'une table
+\end{itemize}
+
+\subsection{Table}
+\begin{itemize}
+    \item Mode lecture seule
+    \item Saisie manuelle (si activée)
+    \item Sensibilité de détection de type
+    \item Affichage des numéros de ligne
+    \item Affichage des valeurs nulles
+    \item En-têtes figées (sticky headers)
+    \item Masquer les colonnes vides
+    \item Afficher les types de colonnes
+    \item Redimensionnement automatique des colonnes
+    \item Calcul des statistiques de colonnes
+\end{itemize}
+
+\subsection{Apparence}
+\begin{itemize}
+    \item Thème clair, sombre, système ou automatique
+    \item Heure de début/fin pour le thème automatique
+    \item Activation de FlatLaf
+    \item Taille et famille de police
+\end{itemize}
+
+\subsection{Raccourcis}
+\begin{tabularx}{\textwidth}{@{}l X l@{}}
+\toprule
+\textbf{Catégorie} & \textbf{Action} & \textbf{Raccourci} \\
+\midrule
+Table & Ouvrir une table & Ctrl+O \\
+Table & Fermer la table & Ctrl+W \\
+Affichage & Ouvrir les filtres & Ctrl+F \\
+Affichage & Paramètres & Ctrl+, \\
+Tri & Tri ascendant & Ctrl+Shift+A \\
+Tri & Tri descendant & Ctrl+Shift+D \\
+Notebook & Annuler & Ctrl+Z \\
+Notebook & Rétablir & Ctrl+Y \\
+\bottomrule
+\end{tabularx}
+
+\subsection{Avancé}
+\begin{itemize}
+    \item Journal de débogage
+    \item Mode développeur
+\end{itemize}
+
+\section{Barre d'état et tâches}
+\begin{itemize}
+    \item Statut courant (chargement, prêt, erreurs)
+    \item Infos sur la table : nom, nombre de lignes, nombre de colonnes
+    \item Statistiques rapides sur la colonne sélectionnée
+    \item Indicateur de chargement et panneau des tâches en cours (clic sur l'indicateur)
+\end{itemize}
+
+\section{Résolution de problèmes}
+
+\subsection{Le fichier ne s'ouvre pas}
+\begin{itemize}
+    \item Vérifiez l'extension et l'encodage (UTF-8 recommandé)
+    \item Assurez-vous que le fichier n'est pas corrompu
+    \item Essayez un fichier plus petit pour tester
+\end{itemize}
+
+\subsection{Le graphique est vide}
+\begin{itemize}
+    \item Vérifiez la colonne de valeur (numérique ou date)
+    \item Désactivez temporairement les filtres pour tester
+    \item Vérifiez la sélection de groupe et de valeur
+\end{itemize}
+
+\subsection{Les colonnes disparaissent}
+\begin{itemize}
+    \item Utilisez \textbf{Afficher toutes les colonnes}
+    \item Désactivez \textbf{Masquer les colonnes vides}
+\end{itemize}
+
+\section{Support et documentation technique}
+\begin{itemize}
+    \item \textbf{README.md} : vue d'ensemble du projet
+    \item \textbf{DOCUMENTATION.md} : documentation technique complète
+    \item \textbf{CONTRIBUTING.md} : guide de contribution
+    \item \textbf{MEMBERS.md} : liste des contributeurs
+\end{itemize}
+
+\end{document}
