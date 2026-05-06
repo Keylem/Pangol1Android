@@ -27,7 +27,7 @@ class AppConfig(context: Context) {
         .map { preferences -> preferences[LANGUAGE_KEY] ?: "en" }
     
     fun getThemeFlow(): Flow<String> = dataStore.data
-        .map { preferences -> preferences[THEME_KEY] ?: "light" }
+        .map { preferences -> preferences[THEME_KEY] ?: "auto" }
     
     fun getDefaultTableUrlFlow(): Flow<String> = dataStore.data
         .map { preferences -> preferences[DEFAULT_TABLE_URL] ?: "" }

@@ -1,5 +1,6 @@
 package com.example.pangol1_android.ui.screens
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -17,7 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import com.example.pangol1_android.ui.PangolViewModel
 import com.example.pangol1_android.ui.composables.ChartSelector
@@ -27,15 +28,22 @@ import com.example.pangol1_android.ui.composables.ExportPanel
 import com.example.pangol1_android.ui.composables.SettingsPanel
 
 @Composable
-fun MainScreen(viewModel: PangolViewModel, modifier: Modifier = Modifier) {
+fun MainScreen(viewModel: PangolViewModel, onPickFile: (() -> Unit)? = null, modifier: Modifier = Modifier) {
     val currentTable by viewModel.currentTable.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
     val currentLanguage by viewModel.currentLanguage.collectAsState()
     val currentTheme by viewModel.currentTheme.collectAsState()
     
-    val currentNavItem = remember { mutableStateOf(0) }
-    val currentTabIndex = remember { mutableStateOf(0) }
+    // Determine effective theme (auto theme uses system preference)
+    val isDarkMode = if (currentTheme == "auto") {
+        isSystemInDarkTheme()
+    } else {
+        currentTheme == "dark"
+    }
+    
+    val currentNavItem = rememberSaveable { mutableStateOf(0) }
+    val currentTabIndex = rememberSaveable { mutableStateOf(0) }
     
     Scaffold(
         bottomBar = {
@@ -84,6 +92,13 @@ fun MainScreen(viewModel: PangolViewModel, modifier: Modifier = Modifier) {
                     when (currentTabIndex.value) {
                         0 -> DataLoadingPanel(
                             onLoadUrl = { viewModel.loadDataFromUrl(it) },
+                            onLoadDemoSales = { viewModel.loadDemoSalesData() },
+                            onLoadDemoTemperature = { viewModel.loadDemoTemperatureData() },
+                            onLoadDemoPopulation = { viewModel.loadDemoPopulationData() },
+                            onLoadDemoGrades = { viewModel.loadDemoStudentGradesData() },
+                            onLoadDemoTraffic = { viewModel.loadDemoWebsiteTrafficData() },
+                            onLoadCsvContent = { csvContent -> viewModel.loadDataFromString(csvContent) },
+                            onPickFile = onPickFile,
                             isLoading = isLoading,
                             error = error,
                             onErrorDismiss = { viewModel.clearError() },

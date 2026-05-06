@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.pangol1_android.core.config.AppConfig
 import com.example.pangol1_android.core.config.Strings
 import com.example.pangol1_android.core.model.DataTable
+import com.example.pangol1_android.core.model.DemoData
 import com.example.pangol1_android.io.CSVLoader
 import com.example.pangol1_android.io.ExportService
 import com.example.pangol1_android.svg.SVGGenerator
@@ -117,6 +118,10 @@ class PangolViewModel(private val context: Context) : ViewModel() {
         _error.value = null
     }
     
+    fun setError(errorMessage: String) {
+        _error.value = errorMessage
+    }
+    
     fun exportDataToCSV(context: Context) {
         val table = _currentTable.value ?: return
         viewModelScope.launch {
@@ -142,5 +147,31 @@ class PangolViewModel(private val context: Context) : ViewModel() {
     
     fun getString(key: String): String {
         return Strings.get(key, _currentLanguage.value)
+    }
+    
+    // Demo data loading methods
+    fun loadDemoSalesData() {
+        _currentTable.value = DemoData.getSalesData()
+        _error.value = null
+    }
+    
+    fun loadDemoTemperatureData() {
+        _currentTable.value = DemoData.getTemperatureData()
+        _error.value = null
+    }
+    
+    fun loadDemoPopulationData() {
+        _currentTable.value = DemoData.getPopulationData()
+        _error.value = null
+    }
+    
+    fun loadDemoStudentGradesData() {
+        _currentTable.value = DemoData.getStudentGradesData()
+        _error.value = null
+    }
+    
+    fun loadDemoWebsiteTrafficData() {
+        _currentTable.value = DemoData.getWebsiteTrafficData()
+        _error.value = null
     }
 }
