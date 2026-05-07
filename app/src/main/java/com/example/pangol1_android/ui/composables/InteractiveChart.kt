@@ -1,9 +1,8 @@
 package com.example.pangol1_android.ui.composables
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,11 +15,14 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
@@ -31,7 +33,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
@@ -39,8 +40,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.gestures.detectTransformGestures
 import com.example.pangol1_android.core.model.DataTable
-import kotlin.math.min
 
 @Composable
 fun InteractiveChartView(
@@ -53,15 +54,13 @@ fun InteractiveChartView(
     var textSizeMultiplier by remember { mutableStateOf(1f) }
     var axisLabelSizeMultiplier by remember { mutableStateOf(1f) }
     var zoomLevel by remember { mutableStateOf(1f) }
-    var panOffsetX by remember { mutableStateOf(0f) }
-    var panOffsetY by remember { mutableStateOf(0f) }
     var selectedDataPoint by remember { mutableStateOf<Int?>(null) }
+    var selectedDataLabel by remember { mutableStateOf<String?>(null) }
+    var selectedDataValue by remember { mutableStateOf<Double?>(null) }
     var showColorPicker by remember { mutableStateOf(false) }
-    var showAxisLabelSettings by remember { mutableStateOf(false) }
     var customColors by remember { mutableStateOf<List<Color>>(emptyList()) }
-    var chartContainerHeight by remember { mutableStateOf(300.dp) }
+    var chartContainerHeight by remember { mutableStateOf(350.dp) }
     
-    // Initialize default colors
     if (customColors.isEmpty()) {
         customColors = listOf(
             MaterialTheme.colorScheme.primary,
@@ -79,8 +78,9 @@ fun InteractiveChartView(
         modifier = Modifier
             .fillMaxWidth()
             .background(MaterialTheme.colorScheme.surface)
+            .verticalScroll(rememberScrollState())
     ) {
-        // Main chart with zoom and pan capability
+        // Main chart with better zoom handling
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -90,33 +90,11 @@ fun InteractiveChartView(
                 .graphicsLayer(
                     scaleX = zoomLevel,
                     scaleY = zoomLevel,
-                    translationX = panOffsetX,
-                    translationY = panOffsetY
+                    transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0.5f, 0.5f)
                 )
                 .pointerInput(Unit) {
                     detectTransformGestures { centroid, pan, gestureZoom, rotation ->
-                        // Update zoom
-                        zoomLevel = (zoomLevel * gestureZoom).coerceIn(0.8f, 2.0f)
-                        // Update pan
-                        panOffsetX += pan.x
-                        panOffsetY += pan.y
-                    }
-                }
-                .pointerInput(Unit) {
-                    detectTapGestures { offset ->
-                        // Convert offset to chart coordinates considering zoom and pan
-                        val chartX = (offset.x - panOffsetX) / zoomLevel
-                        val chartY = (offset.y - panOffsetY) / zoomLevel
-                        
-                        // Estimate which data point was tapped (simplified approach)
-                        // This will be refined based on actual chart dimensions
-                        if (chartX in 40f..350f && chartY in 20f..280f) {
-                            // Rough mapping: divide chart into data point zones
-                            val chartWidth = 310f
-                            val dataPointIndex = ((chartX - 40f) / chartWidth * 10).toInt()
-                            val selectedIndex = dataPointIndex.coerceIn(0, 9)
-                            selectedDataPoint = if (selectedDataPoint == selectedIndex) null else selectedIndex
-                        }
+                        zoomLevel = (zoomLevel * gestureZoom).coerceIn(1.0f, 2.5f)
                     }
                 }
         ) {
@@ -130,62 +108,78 @@ fun InteractiveChartView(
                 axisLabelSizeMultiplier = axisLabelSizeMultiplier,
                 selectedDataPoint = selectedDataPoint,
                 customColors = customColors,
-                onDataPointSelected = { selectedDataPoint = it }
+                onDataPointSelected = { index, label, value ->
+                    selectedDataPoint = if (selectedDataPoint == index) null else index
+                    selectedDataLabel = label
+                    selectedDataValue = value
+                }
             )
         }
         
-        // Tooltip/Explanation popup when data point is selected
-        if (selectedDataPoint != null && dataTable != null && !dataTable.isEmpty()) {
+        // Data Details Panel
+        if (selectedDataPoint != null && selectedDataLabel != null && selectedDataValue != null) {
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(8.dp),
+                    .padding(12.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                )
+                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.9f)
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
             ) {
                 Column(
-                    modifier = Modifier.padding(12.dp)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "📊 Data Details",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                        IconButton(
+                            onClick = { selectedDataPoint = null },
+                            modifier = Modifier.width(32.dp).height(32.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Close,
+                                contentDescription = "Close",
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.height(20.dp)
+                            )
+                        }
+                    }
+                    
                     Text(
-                        text = "Value Details",
+                        text = "Item: $selectedDataLabel",
                         fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                    
+                    Text(
+                        text = "Value: ${"%.3f".format(selectedDataValue)}",
+                        fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                     
-                    val yColumn = dataTable.columns.getOrNull(selectedYColumn)
-                    val xColumn = dataTable.columns.getOrNull(selectedXColumn)
-                    if (yColumn != null && xColumn != null) {
-                        val yValues = dataTable.getColumnAsDoubles(yColumn)
-                        val xLabels = dataTable.getColumn(xColumn)
-                        
-                        if (selectedDataPoint!! < yValues.size) {
-                            val value = yValues[selectedDataPoint!!]
-                            val label = xLabels.getOrNull(selectedDataPoint!!) ?: "Item ${selectedDataPoint!!}"
-                            
-                            Text(
-                                text = "$xColumn: $label",
-                                fontSize = 11.sp,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                modifier = Modifier.padding(top = 4.dp)
-                            )
-                            Text(
-                                text = "$yColumn: ${"%.2f".format(value)}",
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                modifier = Modifier.padding(top = 2.dp)
-                            )
-                            
-                            val allYValues = dataTable.getColumnAsDoubles(yColumn)
-                            val totalSum = allYValues.sum()
-                            val percentage = (value / totalSum) * 100
+                    if (dataTable != null && !dataTable.isEmpty()) {
+                        val yColumn = dataTable.columns.getOrNull(selectedYColumn)
+                        if (yColumn != null) {
+                            val yValues = dataTable.getColumnAsDoubles(yColumn)
+                            val totalSum = yValues.sum()
+                            val percentage = ((selectedDataValue ?: 0.0) / totalSum) * 100
                             Text(
                                 text = "Percentage: ${"%.1f".format(percentage)}%",
-                                fontSize = 10.sp,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                modifier = Modifier.padding(top = 2.dp)
+                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
                             )
                         }
                     }
@@ -197,216 +191,75 @@ fun InteractiveChartView(
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(8.dp),
+                .padding(12.dp),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant
-            )
+                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.95f)
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(12.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(
-                    text = "Chart Controls",
+                    text = "⚙️ Chart Controls",
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 
                 // Text Size Control
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Text Size:",
-                        fontSize = 11.sp,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.width(60.dp)
-                    )
-                    
-                    Button(
-                        onClick = { textSizeMultiplier = (textSizeMultiplier - 0.1f).coerceAtLeast(0.7f) },
-                        modifier = Modifier
-                            .width(40.dp)
-                            .height(32.dp),
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Remove,
-                            contentDescription = "Decrease",
-                            modifier = Modifier.height(16.dp)
-                        )
-                    }
-                    
-                    Slider(
-                        value = textSizeMultiplier,
-                        onValueChange = { textSizeMultiplier = it },
-                        valueRange = 0.7f..1.5f,
-                        steps = 7,
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(32.dp)
-                    )
-                    
-                    Button(
-                        onClick = { textSizeMultiplier = (textSizeMultiplier + 0.1f).coerceAtMost(1.5f) },
-                        modifier = Modifier
-                            .width(40.dp)
-                            .height(32.dp),
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Add,
-                            contentDescription = "Increase",
-                            modifier = Modifier.height(16.dp)
-                        )
-                    }
-                    
-                    Text(
-                        text = "${"%.1f".format(textSizeMultiplier)}x",
-                        fontSize = 10.sp,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.width(35.dp),
-                        textAlign = TextAlign.Center
-                    )
-                }
+                ControlSlider(
+                    label = "📝 Text Size",
+                    value = textSizeMultiplier,
+                    onValueChange = { textSizeMultiplier = it },
+                    range = 0.7f..1.5f,
+                    steps = 7,
+                    displayValue = "${"%.1f".format(textSizeMultiplier)}x"
+                )
                 
                 // Axis Label Size Control
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Axis Labels:",
-                        fontSize = 11.sp,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.width(60.dp)
-                    )
-                    
-                    Button(
-                        onClick = { axisLabelSizeMultiplier = (axisLabelSizeMultiplier - 0.1f).coerceAtLeast(0.5f) },
-                        modifier = Modifier
-                            .width(40.dp)
-                            .height(32.dp),
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Remove,
-                            contentDescription = "Decrease",
-                            modifier = Modifier.height(16.dp)
-                        )
-                    }
-                    
-                    Slider(
-                        value = axisLabelSizeMultiplier,
-                        onValueChange = { axisLabelSizeMultiplier = it },
-                        valueRange = 0.5f..2.0f,
-                        steps = 14,
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(32.dp)
-                    )
-                    
-                    Button(
-                        onClick = { axisLabelSizeMultiplier = (axisLabelSizeMultiplier + 0.1f).coerceAtMost(2.0f) },
-                        modifier = Modifier
-                            .width(40.dp)
-                            .height(32.dp),
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Add,
-                            contentDescription = "Increase",
-                            modifier = Modifier.height(16.dp)
-                        )
-                    }
-                    
-                    Text(
-                        text = "${"%.1f".format(axisLabelSizeMultiplier)}x",
-                        fontSize = 10.sp,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.width(35.dp),
-                        textAlign = TextAlign.Center
-                    )
-                }
+                ControlSlider(
+                    label = "📌 Axis Labels",
+                    value = axisLabelSizeMultiplier,
+                    onValueChange = { axisLabelSizeMultiplier = it },
+                    range = 0.5f..2.0f,
+                    steps = 14,
+                    displayValue = "${"%.1f".format(axisLabelSizeMultiplier)}x"
+                )
                 
                 // Zoom Control
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Zoom:",
-                        fontSize = 11.sp,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.width(60.dp)
-                    )
-                    
-                    Button(
-                        onClick = { zoomLevel = (zoomLevel - 0.1f).coerceAtLeast(0.8f) },
-                        modifier = Modifier
-                            .width(40.dp)
-                            .height(32.dp),
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Remove,
-                            contentDescription = "Zoom Out",
-                            modifier = Modifier.height(16.dp)
-                        )
-                    }
-                    
-                    Slider(
-                        value = zoomLevel,
-                        onValueChange = { zoomLevel = it },
-                        valueRange = 0.8f..2.0f,
-                        steps = 11,
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(32.dp)
-                    )
-                    
-                    Button(
-                        onClick = { zoomLevel = (zoomLevel + 0.1f).coerceAtMost(2.0f) },
-                        modifier = Modifier
-                            .width(40.dp)
-                            .height(32.dp),
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Add,
-                            contentDescription = "Zoom In",
-                            modifier = Modifier.height(16.dp)
-                        )
-                    }
-                    
-                    Text(
-                        text = "${"%.1f".format(zoomLevel)}x",
-                        fontSize = 10.sp,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.width(35.dp),
-                        textAlign = TextAlign.Center
-                    )
-                }
+                ControlSlider(
+                    label = "🔍 Zoom Level",
+                    value = zoomLevel,
+                    onValueChange = { zoomLevel = it },
+                    range = 1.0f..2.5f,
+                    steps = 14,
+                    displayValue = "${"%.1f".format(zoomLevel)}x"
+                )
                 
                 // Chart Height Control
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Height:",
+                        text = "📏 Height:",
                         fontSize = 11.sp,
                         color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.width(60.dp)
+                        modifier = Modifier.width(65.dp)
                     )
                     
                     Slider(
                         value = chartContainerHeight.value,
                         onValueChange = { chartContainerHeight = it.dp },
-                        valueRange = 200f..500f,
-                        steps = 29,
+                        valueRange = 250f..500f,
+                        steps = 24,
                         modifier = Modifier
                             .weight(1f)
                             .height(32.dp)
@@ -431,7 +284,7 @@ fun InteractiveChartView(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = if (showColorPicker) "▼ Colors" else "▶ Colors",
+                        text = if (showColorPicker) "🎨 ▼ Colors" else "🎨 ▶ Colors",
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface,
@@ -439,16 +292,15 @@ fun InteractiveChartView(
                     )
                 }
                 
-                // Color Palette (expandable)
+                // Color Palette
                 if (showColorPicker) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(MaterialTheme.colorScheme.surface)
+                            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.8f))
                             .padding(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        // Preset color palettes
                         val colorPalettes = listOf(
                             "Default" to listOf(
                                 MaterialTheme.colorScheme.primary,
@@ -497,22 +349,24 @@ fun InteractiveChartView(
                                 Text(
                                     text = name,
                                     fontSize = 10.sp,
-                                    color = MaterialTheme.colorScheme.onSurface
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    fontWeight = FontWeight.Bold
                                 )
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(vertical = 4.dp),
+                                        .padding(vertical = 6.dp),
                                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                                 ) {
                                     palette.forEach { color ->
                                         Box(
                                             modifier = Modifier
                                                 .weight(1f)
-                                                .height(24.dp)
+                                                .height(28.dp)
                                                 .background(color)
                                                 .clickable {
                                                     customColors = palette
+                                                    showColorPicker = false
                                                 }
                                         )
                                     }
@@ -522,17 +376,100 @@ fun InteractiveChartView(
                     }
                 }
                 
-                // Clear selection button
+                // Clear Selection Button
                 if (selectedDataPoint != null) {
                     Button(
                         onClick = { selectedDataPoint = null },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(40.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer
+                        )
                     ) {
-                        Text("Clear Selection", fontSize = 10.sp)
+                        Text("✕ Clear Selection", fontSize = 11.sp)
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+fun ControlSlider(
+    label: String,
+    value: Float,
+    onValueChange: (Float) -> Unit,
+    range: ClosedFloatingPointRange<Float>,
+    steps: Int,
+    displayValue: String
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = label,
+            fontSize = 11.sp,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.width(80.dp)
+        )
+        
+        Button(
+            onClick = { onValueChange((value - 0.1f).coerceAtLeast(range.start)) },
+            modifier = Modifier
+                .width(36.dp)
+                .height(32.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
+            )
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Remove,
+                contentDescription = "Decrease",
+                modifier = Modifier.height(14.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        
+        Slider(
+            value = value,
+            onValueChange = onValueChange,
+            valueRange = range,
+            steps = steps,
+            modifier = Modifier
+                .weight(1f)
+                .height(28.dp)
+        )
+        
+        Button(
+            onClick = { onValueChange((value + 0.1f).coerceAtMost(range.endInclusive)) },
+            modifier = Modifier
+                .width(36.dp)
+                .height(32.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
+            )
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Add,
+                contentDescription = "Increase",
+                modifier = Modifier.height(14.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        
+        Text(
+            text = displayValue,
+            fontSize = 10.sp,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.width(40.dp),
+            textAlign = TextAlign.Center,
+            fontWeight = FontWeight.Bold
+        )
     }
 }
 
@@ -547,7 +484,7 @@ fun SimpleChartViewWithEnhancements(
     axisLabelSizeMultiplier: Float = 1f,
     selectedDataPoint: Int? = null,
     customColors: List<Color> = emptyList(),
-    onDataPointSelected: (Int?) -> Unit = {}
+    onDataPointSelected: (Int, String, Double) -> Unit = { _, _, _ -> }
 ) {
     if (dataTable == null || dataTable.isEmpty()) {
         Column(
@@ -609,7 +546,6 @@ fun SimpleChartViewWithEnhancements(
         return
     }
 
-    // Render appropriate chart based on type
     when (chartType) {
         "bar" -> BarChart(
             dataTable = dataTable,

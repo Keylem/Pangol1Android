@@ -1,6 +1,7 @@
 package com.example.pangol1_android.ui.composables
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,6 +20,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -27,6 +29,7 @@ import com.example.pangol1_android.core.model.DataTable
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
+import kotlin.math.sqrt
 
 @Composable
 fun BarChart(
@@ -38,7 +41,7 @@ fun BarChart(
     axisLabelSizeMultiplier: Float = 1f,
     selectedDataPoint: Int? = null,
     customColors: List<Color> = emptyList(),
-    onDataPointSelected: (Int?) -> Unit = {}
+    onDataPointSelected: (Int, String, Double) -> Unit = { _, _, _ -> }
 ) {
     if (dataTable.isEmpty()) return
     
@@ -72,6 +75,36 @@ fun BarChart(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(300.dp)
+                .pointerInput(Unit) {
+                    detectTapGestures { offset ->
+                        // Detect which bar was clicked
+                        val chartWidth = size.width * 0.85f
+                        val chartHeight = size.height * 0.80f
+                        val paddingLeft = 40f
+                        val paddingBottom = 50f
+                        
+                        val barWidth = chartWidth / yValues.size / 1.3f
+                        val spaceBetween = chartWidth / yValues.size
+                        
+                        var clickedIndex = -1
+                        yValues.forEachIndexed { index, value ->
+                            val x = paddingLeft + (spaceBetween * index) + (spaceBetween - barWidth) / 2
+                            val barHeight = ((value / maxValue) * chartHeight).toFloat()
+                            val y = size.height - paddingBottom - barHeight
+                            
+                            if (offset.x >= x && offset.x <= x + barWidth &&
+                                offset.y >= y && offset.y <= size.height - paddingBottom) {
+                                clickedIndex = index
+                            }
+                        }
+                        
+                        if (clickedIndex >= 0) {
+                            val label = xLabels.getOrNull(clickedIndex) ?: "Item $clickedIndex"
+                            val value = yValues[clickedIndex]
+                            onDataPointSelected(clickedIndex, label, value)
+                        }
+                    }
+                }
         ) {
             val chartWidth = size.width * 0.85f
             val chartHeight = size.height * 0.80f
@@ -146,7 +179,7 @@ fun BarChart(
                         android.graphics.Paint().apply {
                             color = android.graphics.Color.valueOf(textColor.red, textColor.green, textColor.blue, textColor.alpha).toArgb()
                             textAlign = android.graphics.Paint.Align.CENTER
-                            textSize = 11f
+                            textSize = 11f * axisLabelSizeMultiplier * axisLabelSizeMultiplier
                         }
                     )
                 }
@@ -165,7 +198,7 @@ fun PieChart(
     axisLabelSizeMultiplier: Float = 1f,
     selectedDataPoint: Int? = null,
     customColors: List<Color> = emptyList(),
-    onDataPointSelected: (Int?) -> Unit = {}
+    onDataPointSelected: (Int, String, Double) -> Unit = { _, _, _ -> }
 ) {
     if (dataTable.isEmpty()) return
     
@@ -207,6 +240,40 @@ fun PieChart(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(350.dp)
+                .pointerInput(Unit) {
+                    detectTapGestures { offset ->
+                        // Detect which pie slice was tapped
+                        val centerX = size.width * 0.45f
+                        val centerY = size.height * 0.50f
+                        val radius = minOf(size.width, size.height) * 0.30f
+                        
+                        val dx = offset.x - centerX
+                        val dy = offset.y - centerY
+                        val distance = sqrt(dx * dx + dy * dy)
+                        
+                        // Check if tap is within pie circle
+                        if (distance <= radius) {
+                            var angle = Math.toDegrees(kotlin.math.atan2(dy.toDouble(), dx.toDouble())).toFloat()
+                            if (angle < 0) angle += 360f
+                            
+                            var currentAngle = -90f
+                            var clickedIndex = -1
+                            yValues.forEachIndexed { index, value ->
+                                val sliceAngle = (value / totalValue * 360.0).toFloat()
+                                if (angle >= currentAngle && angle < currentAngle + sliceAngle) {
+                                    clickedIndex = index
+                                }
+                                currentAngle += sliceAngle
+                            }
+                            
+                            if (clickedIndex >= 0) {
+                                val label = xLabels.getOrNull(clickedIndex) ?: "Item $clickedIndex"
+                                val value = yValues[clickedIndex]
+                                onDataPointSelected(clickedIndex, label, value)
+                            }
+                        }
+                    }
+                }
         ) {
             val centerX = size.width * 0.45f
             val centerY = size.height * 0.50f
@@ -285,7 +352,7 @@ fun PieChart(
                             legendY + 10,
                             android.graphics.Paint().apply {
                                 color = android.graphics.Color.valueOf(textColor.red, textColor.green, textColor.blue, textColor.alpha).toArgb()
-                                textSize = baseFontSize * 0.85f * axisLabelSizeMultiplier
+                                textSize = 11f * axisLabelSizeMultiplier
                             }
                         )
                     }
@@ -307,7 +374,7 @@ fun LineChart(
     axisLabelSizeMultiplier: Float = 1f,
     selectedDataPoint: Int? = null,
     customColors: List<Color> = emptyList(),
-    onDataPointSelected: (Int?) -> Unit = {}
+    onDataPointSelected: (Int, String, Double) -> Unit = { _, _, _ -> }
 ) {
     if (dataTable.isEmpty()) return
     
@@ -436,7 +503,7 @@ fun ScatterPlot(
     axisLabelSizeMultiplier: Float = 1f,
     selectedDataPoint: Int? = null,
     customColors: List<Color> = emptyList(),
-    onDataPointSelected: (Int?) -> Unit = {}
+    onDataPointSelected: (Int, String, Double) -> Unit = { _, _, _ -> }
 ) {
     if (dataTable.isEmpty()) return
     
@@ -528,7 +595,7 @@ fun Histogram(
     axisLabelSizeMultiplier: Float = 1f,
     selectedDataPoint: Int? = null,
     customColors: List<Color> = emptyList(),
-    onDataPointSelected: (Int?) -> Unit = {}
+    onDataPointSelected: (Int, String, Double) -> Unit = { _, _, _ -> }
 ) {
     if (dataTable.isEmpty()) return
     
